@@ -15,21 +15,30 @@
   <p>High Voltage Engineering – Practice Exam</p>
 </header>
 
-<div class="container">
-  <div id="quiz">
-    <div id="question" class="question"></div>
-    <div id="questionImage" class="question-image"></div>
-    <div id="nav" class="nav"></div>
-    <div id="choices" class="choices"></div>
+<div class="container layout">
+  <!-- แถบข้อด้านข้าง -->
+  <aside class="sidebar">
+    <div class="side-title">แถบข้อ</div>
+    <div id="nav" class="nav-grid"></div>
+  </aside>
 
-    <div class="buttons">
-      <button class="btn-secondary" onclick="prevQuestion()">⬅ ข้อก่อนหน้า</button>
-      <button class="btn-primary" onclick="nextQuestion()">ข้อถัดไป ➡</button>
+  <!-- กล่องข้อสอบ -->
+  <main class="main">
+    <div id="quiz" class="card">
+      <div id="question" class="question"></div>
+      <div id="questionImage" class="question-image"></div>
+      <div id="choices" class="choices"></div>
+
+      <div class="buttons sticky-actions">
+        <button class="btn-secondary" onclick="prevQuestion()">⬅ ข้อก่อนหน้า</button>
+        <button class="btn-primary" onclick="nextQuestion()">ข้อถัดไป ➡</button>
+      </div>
+
+      <div id="result" class="result"></div>
     </div>
-
-    <div id="result" class="result"></div>
-  </div>
+  </main>
 </div>
+
 
 <footer>
   © 2026 High Voltage Engineering Quiz
@@ -39,9 +48,12 @@
 <script src="app.js"></script>
 
 <script>
+  // =========================
+  // State
+  // =========================
   let currentIndex = 0;
-  let userAnswers = [];       // เก็บคำตอบที่เลือก (index)
-  let locked = [];            // ล็อกแล้วไหมต่อข้อ
+  let userAnswers = []; // เก็บคำตอบที่เลือก (index)
+  let locked = [];      // ล็อกแล้วไหมต่อข้อ
 
   function getCorrectIndex(q) {
     return (typeof q.answer === "number") ? q.answer : q.answerIndex;
@@ -75,16 +87,12 @@
 
   function updateNav() {
     const buttons = document.querySelectorAll("#nav .nav-btn");
-
     buttons.forEach((btn, i) => {
       btn.classList.remove("current", "answered", "unanswered");
 
       if (i === currentIndex) {
         btn.classList.add("current");
-        return;
-      }
-
-      if (typeof userAnswers[i] === "number") {
+      } else if (typeof userAnswers[i] === "number") {
         btn.classList.add("answered");
       } else {
         btn.classList.add("unanswered");
@@ -97,67 +105,74 @@
   // =========================
   function loadQuestion() {
     const q = quizData[currentIndex];
+    if (!q) return;
 
-    document.getElementById("question").innerText =
-      `ข้อ ${q.id}. ${q.question}`;
+    const questionEl = document.getElementById("question");
+    const imgBox = document.getElementById("questionImage");
+    const choicesDiv = document.getElementById("choices");
+    const resultEl = document.getElementById("result");
+
+    if (questionEl) questionEl.innerText = `ข้อ ${q.id}. ${q.question}`;
 
     // ===== แสดงรูปถ้ามี =====
-    const imgBox = document.getElementById("questionImage");
-    if (q.image) {
-      imgBox.innerHTML = `<img src="${q.image}" class="q-img" alt="question image">`;
-      imgBox.style.display = "block";
-    } else {
-      imgBox.innerHTML = "";
-      imgBox.style.display = "none";
+    if (imgBox) {
+      if (q.image) {
+        imgBox.innerHTML = `<img src="${q.image}" class="q-img" alt="question image">`;
+        imgBox.style.display = "block";
+      } else {
+        imgBox.innerHTML = "";
+        imgBox.style.display = "none";
+      }
     }
 
-    const choicesDiv = document.getElementById("choices");
-    choicesDiv.innerHTML = "";
+    if (choicesDiv) choicesDiv.innerHTML = "";
+    if (resultEl) resultEl.innerHTML = "";
 
-    // ล้างผลลัพธ์
-    document.getElementById("result").innerHTML = "";
-
+    // สร้างตัวเลือก
     q.choices.forEach((choice, idx) => {
       const label = document.createElement("label");
       label.className = "choice";
 
       const checked = (userAnswers[currentIndex] === idx) ? "checked" : "";
+
       label.innerHTML = `
         <input type="radio" name="choice" value="${idx}" ${checked}>
-        ${choice}
+        <span>${choice}</span>
       `;
 
-      // ถ้าข้อนี้ล็อกแล้ว ให้ปิดการคลิก
-      if (locked[currentIndex]) {
+      const input = label.querySelector("input");
+
+      // ถ้าข้อนี้ล็อกแล้วให้ disable
+      if (locked[currentIndex] && input) {
         label.classList.add("disabled");
-        label.querySelector("input").disabled = true;
+        input.disabled = true;
       }
 
-      // เมื่อคลิกตัวเลือก → ตรวจทันทีแบบ Forms
-      label.addEventListener("click", () => {
-        if (locked[currentIndex]) return; // กันคลิกซ้ำตอนล็อก
+      // ใช้ change event ของ input จะนิ่งกว่า click ที่ label
+      if (input) {
+        input.addEventListener("change", () => {
+          if (locked[currentIndex]) return;
 
-        const input = label.querySelector("input");
-        input.checked = true;
+          userAnswers[currentIndex] = idx;
+          locked[currentIndex] = true;
 
-        userAnswers[currentIndex] = idx;
-        locked[currentIndex] = true;
-
-        showInstantResult();
-        disableChoices();
-        updateNav(); // ✅ อัปเดตสีในแถบเลขข้อ
-      });
+          showInstantResult();
+          disableChoices();
+          updateNav();
+        });
+      }
 
       choicesDiv.appendChild(label);
     });
 
-    // ถ้ามีคำตอบอยู่แล้ว และล็อกแล้ว → แสดงสีถูกผิดตอนกลับมาดู
+    // ถ้ากลับมาดูข้อเดิมที่ล็อกแล้ว
     if (locked[currentIndex] && typeof userAnswers[currentIndex] === "number") {
       showInstantResult();
       disableChoices();
     }
 
-    updateNav(); // ✅ อัปเดต current/answered/unanswered ทุกครั้งที่โหลดข้อ
+    updateNav();
+    scrollToTopSoft(); // กันหน้าเด้งลง
   }
 
   function disableChoices() {
@@ -185,7 +200,10 @@
       ? `<div style="margin-top:8px;opacity:.9">${q.explain}</div>`
       : "";
 
-    document.getElementById("result").innerHTML = `
+    const resultEl = document.getElementById("result");
+    if (!resultEl) return;
+
+    resultEl.innerHTML = `
       <div class="feedback ${isCorrect ? "good" : "bad"}">
         <div class="badge">${isCorrect ? "✔ ถูกต้อง" : "✖ ไม่ถูกต้อง"}</div>
         <div>
@@ -229,12 +247,20 @@
       if (userAnswers[i] === correct) score++;
     });
 
-    document.getElementById("quiz").innerHTML = `
+    const quizEl = document.getElementById("quiz");
+    if (!quizEl) return;
+
+    quizEl.innerHTML = `
       <h2>🎉 ทำข้อสอบเสร็จแล้ว</h2>
       <p>คะแนนของคุณ: <b>${score} / ${quizData.length}</b></p>
       <p style="color:#64748b">* ข้อที่ยังไม่ตอบจะไม่นับคะแนน</p>
       <button class="btn-primary" type="button" onclick="location.reload()">เริ่มใหม่</button>
     `;
+  }
+
+  function scrollToTopSoft() {
+    // ให้คงประสบการณ์เหมือนทำข้อสอบ (ไม่เด้งไปกลางหน้า)
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // =========================
@@ -243,10 +269,11 @@
   if (!window.quizData || !quizData.length) {
     alert("ไม่พบ quizData — เช็กไฟล์ quiz.js และตัวแปร quizData");
   } else {
-    buildNav();     // ✅ ต้องเรียกก่อน
-    loadQuestion(); // ✅ แล้วค่อยแสดงข้อ
+    buildNav();
+    loadQuestion();
   }
 </script>
+
 
 
 

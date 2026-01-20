@@ -298,3 +298,120 @@ footer {
   border-color: #cbd5e1;
   color: #334155;
 }
+/* ====== NEW LAYOUT (sidebar) ====== */
+.layout{
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
+  padding: 20px;
+}
+
+.sidebar{
+  position: sticky;
+  top: 14px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+  padding: 14px;
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+}
+
+.side-title{
+  font-weight: 800;
+  color:#0f172a;
+  margin-bottom: 10px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+}
+
+.nav-grid{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+/* ปุ่มเลขข้อ */
+.nav-btn{
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: .15s ease;
+  padding: 0;
+}
+
+.nav-btn:hover{
+  transform: translateY(-1px);
+  border-color:#2563eb;
+  box-shadow: 0 6px 14px rgba(37,99,235,.18);
+}
+
+/* สถานะ */
+.nav-btn.unanswered{
+  background:#f8fafc;
+  border-color:#cbd5e1;
+}
+.nav-btn.answered{
+  background:#ecfeff;
+  border-color:#06b6d4;
+}
+.nav-btn.current{
+  background:#2563eb;
+  border-color:#1d4ed8;
+  color:#fff;
+}
+
+/* กันปุ่มล่างเด้ง: ทำพื้นที่ให้ผลลัพธ์ + ทำปุ่ม sticky */
+.result{
+  min-height: 64px;
+}
+
+.sticky-actions{
+  position: sticky;
+  bottom: 10px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 26px rgba(0,0,0,.08);
+  margin-top: 18px;
+}
+
+/* ปรับ container เดิมไม่ต้องเป็นกล่องขาวแล้ว */
+.container{
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* มือถือ: แถบข้อย้ายไปบน */
+@media (max-width: 900px){
+  .layout{
+    grid-template-columns: 1fr;
+  }
+  .sidebar{
+    position: relative;
+    top: 0;
+    max-height: none;
+  }
+  .nav-grid{
+    grid-template-columns: repeat(10, 1fr);
+  }
+}
+
