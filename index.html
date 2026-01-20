@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>HVE Quiz | High Voltage Engineering</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<header>
+  <h1>⚡ HVE Quiz</h1>
+  <p>High Voltage Engineering – Practice Exam</p>
+</header>
+
+<div class="container">
+  <div id="quiz">
+    <div id="question" class="question"></div>
+    <div id="questionImage" class="question-image"></div>
+    <div id="choices" class="choices"></div>
+
+    <div class="buttons">
+      <button class="btn-secondary" onclick="prevQuestion()">⬅ ข้อก่อนหน้า</button>
+      <button class="btn-primary" onclick="nextQuestion()">ข้อถัดไป ➡</button>
+    </div>
+
+    <div id="result" class="result"></div>
+  </div>
+</div>
+
+<footer>
+  © 2026 High Voltage Engineering Quiz
+</footer>
+
+<script src="quiz.js"></script>
+<script src="app.js"></script>
+
+<script>
+  let currentIndex = 0;
+  let userAnswers = [];       // เก็บคำตอบที่เลือก (index)
+  let locked = [];            // ล็อกแล้วไหมต่อข้อ
+
+  function getCorrectIndex(q) {
+    return (typeof q.answer === "number") ? q.answer : q.answerIndex;
+  }
+
+  function loadQuestion() {
+    const q = quizData[currentIndex];
+
+    document.getElementById("question").innerText =
+      `ข้อ ${q.id}. ${q.question}`;
+      // ===== แสดงรูปถ้ามี =====
+  const imgBox = document.getElementById("questionImage");
+  if (q.image) {
+    imgBox.innerHTML = `<img src="${q.image}" class="q-img" alt="question image">`;
+    imgBox.style.display = "block";
+  } else {
+    imgBox.innerHTML = "";
+    imgBox.style.display = "none";
+  }
+
+    const choicesDiv = document.getElementById("choices");
+    choicesDiv.innerHTML = "";
+
+    // ล้างผลลัพธ์
+    document.getElementById("result").innerHTML = "";
+
+    q.choices.forEach((choice, idx) => {
+      const label = document.createElement("label");
+      label.className = "choice";
+
+      const checked = (userAnswers[currentIndex] === idx) ? "checked" : "";
+      label.innerHTML = `
+        <input type="radio" name="choice" value="${idx}" ${checked}>
+        ${choice}
+      `;
+
+      // ถ้าข้อนี้ล็อกแล้ว ให้ปิดการคลิก
+      if (locked[currentIndex]) {
+        label.classList.add("disabled");
+        label.querySelector("input").disabled = true;
+      }
+
+      // เมื่อคลิกตัวเลือก → ตรวจทันทีแบบ Forms
+      label.addEventListener("click", (e) => {
+        // กันคลิกซ้ำตอนล็อก
+        if (locked[currentIndex]) return;
+
+        // บังคับให้ radio ติด
+        const input = label.querySelector("input");
+        input.checked = true;
+
+        const selected = idx;
+        userAnswers[currentIndex] = selected;
+
+        // ล็อกทันที
+        locked[currentIndex] = true;
+
+        // แสดงผล ถูก/ผิด + ไฮไลต์
+        showInstantResult();
+
+        // ปิดการเลือกทุกตัวเลือก
+        disableChoices();
+      });
+
+      choicesDiv.appendChild(label);
+    });
+
+    // ถ้ามีคำตอบอยู่แล้ว และล็อกแล้ว → แสดงสีถูกผิดตอนกลับมาดู
+    if (locked[currentIndex] && typeof userAnswers[currentIndex] === "number") {
+      showInstantResult();
+      disableChoices();
+    }
+  }
+
+  function disableChoices() {
+    document.querySelectorAll("#choices .choice").forEach(label => {
+      label.classList.add("disabled");
+      const input = label.querySelector("input");
+      if (input) input.disabled = true;
+    });
+  }
+
+  function showInstantResult() {
+    const q = quizData[currentIndex];
+    const correct = getCorrectIndex(q);
+    const selected = userAnswers[currentIndex];
+
+    // ไฮไลต์ตัวเลือก
+    document.querySelectorAll("#choices .choice").forEach((label, idx) => {
+      label.classList.remove("correct", "wrong");
+      if (idx === correct) label.classList.add("correct");
+      if (idx === selected && selected !== correct) label.classList.add("wrong");
+    });
+
+    const isCorrect = (selected === correct);
+
+    const explainText = q.explain ? `<div style="margin-top:8px;opacity:.9">${q.explain}</div>` : "";
+
+    document.getElementById("result").innerHTML = `
+      <div class="feedback ${isCorrect ? "good" : "bad"}">
+        <div class="badge">${isCorrect ? "✔ ถูกต้อง" : "✖ ไม่ถูกต้อง"}</div>
+        <div>
+          <div><b>เฉลย:</b> ${q.choices[correct]}</div>
+          ${explainText}
+        </div>
+      </div>
+
+      <div class="small-actions">
+        <button class="btn-outline" onclick="unlockCurrent()">แก้คำตอบข้อนี้</button>
+      </div>
+    `;
+  }
+
+  function unlockCurrent() {
+    locked[currentIndex] = false;
+    // ไม่ลบคำตอบเดิม เพื่อให้เลือกใหม่ได้ (จะเปลี่ยนก็คลิกใหม่)
+    loadQuestion();
+  }
+
+  function nextQuestion() {
+    if (currentIndex < quizData.length - 1) {
+      currentIndex++;
+      loadQuestion();
+    } else {
+      showScore();
+    }
+  }
+
+  function prevQuestion() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      loadQuestion();
+    }
+  }
+
+  function showScore() {
+    let score = 0;
+    quizData.forEach((q, i) => {
+      const correct = getCorrectIndex(q);
+      if (userAnswers[i] === correct) score++;
+    });
+
+    document.getElementById("quiz").innerHTML = `
+      <h2>🎉 ทำข้อสอบเสร็จแล้ว</h2>
+      <p>คะแนนของคุณ: <b>${score} / ${quizData.length}</b></p>
+      <p style="color:#64748b">* ข้อที่ยังไม่ตอบจะไม่นับคะแนน</p>
+      <button class="btn-primary" onclick="location.reload()">เริ่มใหม่</button>
+    `;
+  }
+
+  // ป้องกันกรณี quizData ไม่มี
+  if (!window.quizData || !quizData.length) {
+    alert("ไม่พบ quizData — เช็กไฟล์ quiz.js และตัวแปร quizData");
+  } else {
+    loadQuestion();
+  }
+</script>
+
+
+</body>
+</html>
