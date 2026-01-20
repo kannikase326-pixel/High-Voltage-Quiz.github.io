@@ -239,3 +239,62 @@ footer {
   border: 1px solid #e5e7eb;
   background: #fff;
 }
+/* ===== FIX BUTTON BAR AT BOTTOM ===== */
+.buttons {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  padding: 16px 0;
+  margin-top: 24px;
+  border-top: 1px solid #e5e7eb;
+  z-index: 10;
+}
+.result {
+  min-height: 90px; /* ปรับได้ */
+}
+/* ===== Question Navigator ===== */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 18px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.nav-btn {
+  width: 40px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  transition: 0.15s ease;
+}
+
+.nav-btn:hover {
+  transform: translateY(-1px);
+}
+
+.nav-btn.current {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.nav-btn.answered {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #14532d;
+}
+
+.nav-btn.unanswered {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}

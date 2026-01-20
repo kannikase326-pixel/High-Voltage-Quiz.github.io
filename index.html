@@ -19,6 +19,7 @@
   <div id="quiz">
     <div id="question" class="question"></div>
     <div id="questionImage" class="question-image"></div>
+    <div id="nav" class="nav"></div>
     <div id="choices" class="choices"></div>
 
     <div class="buttons">
@@ -46,20 +47,69 @@
     return (typeof q.answer === "number") ? q.answer : q.answerIndex;
   }
 
+  // =========================
+  // Navigator (1–100)
+  // =========================
+  function buildNav() {
+    const nav = document.getElementById("nav");
+    if (!nav) return;
+
+    nav.innerHTML = "";
+
+    quizData.forEach((q, i) => {
+      const btn = document.createElement("button");
+      btn.className = "nav-btn";
+      btn.type = "button";
+      btn.textContent = q.id;
+
+      btn.addEventListener("click", () => {
+        currentIndex = i;
+        loadQuestion();
+      });
+
+      nav.appendChild(btn);
+    });
+
+    updateNav();
+  }
+
+  function updateNav() {
+    const buttons = document.querySelectorAll("#nav .nav-btn");
+
+    buttons.forEach((btn, i) => {
+      btn.classList.remove("current", "answered", "unanswered");
+
+      if (i === currentIndex) {
+        btn.classList.add("current");
+        return;
+      }
+
+      if (typeof userAnswers[i] === "number") {
+        btn.classList.add("answered");
+      } else {
+        btn.classList.add("unanswered");
+      }
+    });
+  }
+
+  // =========================
+  // Load Question
+  // =========================
   function loadQuestion() {
     const q = quizData[currentIndex];
 
     document.getElementById("question").innerText =
       `ข้อ ${q.id}. ${q.question}`;
-      // ===== แสดงรูปถ้ามี =====
-  const imgBox = document.getElementById("questionImage");
-  if (q.image) {
-    imgBox.innerHTML = `<img src="${q.image}" class="q-img" alt="question image">`;
-    imgBox.style.display = "block";
-  } else {
-    imgBox.innerHTML = "";
-    imgBox.style.display = "none";
-  }
+
+    // ===== แสดงรูปถ้ามี =====
+    const imgBox = document.getElementById("questionImage");
+    if (q.image) {
+      imgBox.innerHTML = `<img src="${q.image}" class="q-img" alt="question image">`;
+      imgBox.style.display = "block";
+    } else {
+      imgBox.innerHTML = "";
+      imgBox.style.display = "none";
+    }
 
     const choicesDiv = document.getElementById("choices");
     choicesDiv.innerHTML = "";
@@ -84,25 +134,18 @@
       }
 
       // เมื่อคลิกตัวเลือก → ตรวจทันทีแบบ Forms
-      label.addEventListener("click", (e) => {
-        // กันคลิกซ้ำตอนล็อก
-        if (locked[currentIndex]) return;
+      label.addEventListener("click", () => {
+        if (locked[currentIndex]) return; // กันคลิกซ้ำตอนล็อก
 
-        // บังคับให้ radio ติด
         const input = label.querySelector("input");
         input.checked = true;
 
-        const selected = idx;
-        userAnswers[currentIndex] = selected;
-
-        // ล็อกทันที
+        userAnswers[currentIndex] = idx;
         locked[currentIndex] = true;
 
-        // แสดงผล ถูก/ผิด + ไฮไลต์
         showInstantResult();
-
-        // ปิดการเลือกทุกตัวเลือก
         disableChoices();
+        updateNav(); // ✅ อัปเดตสีในแถบเลขข้อ
       });
 
       choicesDiv.appendChild(label);
@@ -113,6 +156,8 @@
       showInstantResult();
       disableChoices();
     }
+
+    updateNav(); // ✅ อัปเดต current/answered/unanswered ทุกครั้งที่โหลดข้อ
   }
 
   function disableChoices() {
@@ -136,8 +181,9 @@
     });
 
     const isCorrect = (selected === correct);
-
-    const explainText = q.explain ? `<div style="margin-top:8px;opacity:.9">${q.explain}</div>` : "";
+    const explainText = q.explain
+      ? `<div style="margin-top:8px;opacity:.9">${q.explain}</div>`
+      : "";
 
     document.getElementById("result").innerHTML = `
       <div class="feedback ${isCorrect ? "good" : "bad"}">
@@ -149,15 +195,15 @@
       </div>
 
       <div class="small-actions">
-        <button class="btn-outline" onclick="unlockCurrent()">แก้คำตอบข้อนี้</button>
+        <button class="btn-outline" type="button" onclick="unlockCurrent()">แก้คำตอบข้อนี้</button>
       </div>
     `;
   }
 
   function unlockCurrent() {
     locked[currentIndex] = false;
-    // ไม่ลบคำตอบเดิม เพื่อให้เลือกใหม่ได้ (จะเปลี่ยนก็คลิกใหม่)
     loadQuestion();
+    updateNav();
   }
 
   function nextQuestion() {
@@ -187,17 +233,21 @@
       <h2>🎉 ทำข้อสอบเสร็จแล้ว</h2>
       <p>คะแนนของคุณ: <b>${score} / ${quizData.length}</b></p>
       <p style="color:#64748b">* ข้อที่ยังไม่ตอบจะไม่นับคะแนน</p>
-      <button class="btn-primary" onclick="location.reload()">เริ่มใหม่</button>
+      <button class="btn-primary" type="button" onclick="location.reload()">เริ่มใหม่</button>
     `;
   }
 
-  // ป้องกันกรณี quizData ไม่มี
+  // =========================
+  // Init
+  // =========================
   if (!window.quizData || !quizData.length) {
     alert("ไม่พบ quizData — เช็กไฟล์ quiz.js และตัวแปร quizData");
   } else {
-    loadQuestion();
+    buildNav();     // ✅ ต้องเรียกก่อน
+    loadQuestion(); // ✅ แล้วค่อยแสดงข้อ
   }
 </script>
+
 
 
 </body>
